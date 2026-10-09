@@ -1,0 +1,83 @@
+// DAX measures for the Bank Churn dashboard
+// Create them in a measure table called _Measures:
+//   Home > Enter data > name the table "_Measures" > Load, then hide its default "Column1".
+// For each block below: select _Measures > New measure > paste ONE measure.
+// Format hints are in the comment above each measure.
+
+// ===================== Core =====================
+
+// Format: Whole number, thousands separator
+Total Customers =
+COUNTROWS ( Customers )
+
+// Format: Whole number, thousands separator
+Churned Customers =
+SUM ( Customers[Churned] )
+
+// Format: Whole number, thousands separator
+Active Customers =
+[Total Customers] - [Churned Customers]
+
+// Format: Percentage, 1 decimal
+Churn Rate =
+DIVIDE ( [Churned Customers], [Total Customers] )
+
+// Format: Percentage, 1 decimal
+// Overall churn rate for whatever is selected in slicers; ignores the chart's own category.
+// Used for the dotted "average" reference line and for conditional formatting.
+Churn Rate (Baseline) =
+CALCULATE ( [Churn Rate], ALLSELECTED ( Customers ) )
+
+// Format: Percentage, 1 decimal (shows +/- points vs the baseline)
+Churn Rate vs Baseline =
+[Churn Rate] - [Churn Rate (Baseline)]
+
+// ===================== Customer value =====================
+
+// Format: Currency $, 0 decimals
+Avg Credit Limit =
+AVERAGE ( Customers[Credit_Limit] )
+
+// Format: Percentage, 1 decimal
+Avg Utilization =
+AVERAGE ( Customers[Avg_Utilization_Ratio] )
+
+// Format: Whole number
+Avg Transactions (12m) =
+AVERAGE ( Customers[Total_Trans_Ct] )
+
+// Format: Currency $, 0 decimals, Display units: Millions
+Total Spend (12m) =
+SUM ( Customers[Total_Trans_Amt] )
+
+// ===================== Retention watchlist =====================
+
+// Format: Whole number, thousands separator
+High-Risk Active Customers =
+CALCULATE (
+    [Active Customers],
+    Customers[Risk Tier] = "High"
+)
+
+// Format: Currency $, 0 decimals, Display units: Millions
+Credit Limit at Risk =
+CALCULATE (
+    SUM ( Customers[Credit_Limit] ),
+    Customers[Risk Tier] = "High",
+    Customers[Churned] = 0
+)
+
+// Format: Percentage, 0 decimals
+// Share of all churners the rule-based score would have flagged as High risk
+High-Risk Capture Rate =
+DIVIDE (
+    CALCULATE ( [Churned Customers], Customers[Risk Tier] = "High" ),
+    [Churned Customers]
+)
+
+// ===================== Dynamic text =====================
+
+// Use in a Card (new) or text box for a subtitle that reacts to slicers
+Overview Subtitle =
+FORMAT ( [Total Customers], "#,0" ) & " customers  |  "
+    & FORMAT ( [Churn Rate], "0.0%" ) & " churned in the last 12 months"

@@ -1,0 +1,29 @@
+// Paste ALL of this into DAX query view (4th icon on the left sidebar),
+// click Run once, then click "Update model with changes" at the top.
+// All 14 measures are added to _Measures in one go. Set number formats afterwards.
+DEFINE
+	MEASURE '_Measures'[Total Customers] = COUNTROWS ( Customers )
+	MEASURE '_Measures'[Churned Customers] = SUM ( Customers[Churned] )
+	MEASURE '_Measures'[Active Customers] = [Total Customers] - [Churned Customers]
+	MEASURE '_Measures'[Churn Rate] = DIVIDE ( [Churned Customers], [Total Customers] )
+	MEASURE '_Measures'[Churn Rate (Baseline)] = CALCULATE ( [Churn Rate], ALLSELECTED ( Customers ) )
+	MEASURE '_Measures'[Churn Rate vs Baseline] = [Churn Rate] - [Churn Rate (Baseline)]
+	MEASURE '_Measures'[Avg Credit Limit] = AVERAGE ( Customers[Credit_Limit] )
+	MEASURE '_Measures'[Avg Utilization] = AVERAGE ( Customers[Avg_Utilization_Ratio] )
+	MEASURE '_Measures'[Avg Transactions (12m)] = AVERAGE ( Customers[Total_Trans_Ct] )
+	MEASURE '_Measures'[Total Spend (12m)] = SUM ( Customers[Total_Trans_Amt] )
+	MEASURE '_Measures'[High-Risk Active Customers] = CALCULATE ( [Active Customers], Customers[Risk Tier] = "High" )
+	MEASURE '_Measures'[Credit Limit at Risk] = CALCULATE ( SUM ( Customers[Credit_Limit] ), Customers[Risk Tier] = "High", Customers[Churned] = 0 )
+	MEASURE '_Measures'[High-Risk Capture Rate] = DIVIDE ( CALCULATE ( [Churned Customers], Customers[Risk Tier] = "High" ), [Churned Customers] )
+	MEASURE '_Measures'[Overview Subtitle] = FORMAT ( [Total Customers], "#,0" ) & " customers  |  " & FORMAT ( [Churn Rate], "0.0%" ) & " churned in the last 12 months"
+
+EVALUATE
+	{
+		( "Total Customers", [Total Customers] ),
+		( "Churned Customers", [Churned Customers] ),
+		( "Churn Rate", [Churn Rate] ),
+		( "Avg Credit Limit", [Avg Credit Limit] ),
+		( "High-Risk Active Customers", [High-Risk Active Customers] ),
+		( "Credit Limit at Risk", [Credit Limit at Risk] ),
+		( "High-Risk Capture Rate", [High-Risk Capture Rate] )
+	}
